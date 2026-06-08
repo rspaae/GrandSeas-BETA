@@ -1,0 +1,59 @@
+# ========================================
+# GrandSeas Messages (MiniMessage format)
+# ========================================
+
+# General
+prefix: "<gradient:#00d2ff:#3a7bd5><bold>GrandSeas</bold></gradient> <dark_gray>»</dark_gray> "
+no-permission: "<red>You don't have permission to do that."
+player-only: "<red>This command can only be run by a player."
+
+# Island
+island-created: "<green>🏝 Your island has been created!"
+no-island: "<red>You don't have an island. Use <yellow>/is create<red> to make one."
+already-have-island: "<red>You already have an island! Use <yellow>/is home<red> to go there."
+island-deleted: "<yellow>⚠ Your island has been deleted."
+island-delete-cancelled: "<green>Island deletion cancelled."
+teleported-home: "<green>🏝 Teleported to your island!"
+teleported-center: "<green>🏝 Teleported to your island center!"
+no-home: "<red>Could not find your island location."
+
+# Team — Invite
+invite-sent: "<green>✉ Invitation sent to <white><player><green>! They have <yellow>60 seconds<green> to accept."
+invite-received: "<aqua>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</aqua>\n<green>✉ <white><player> <green>invited you to their island!\n<yellow>Type <gold>/is accept <yellow>to join or <red>/is deny <yellow>to decline.\n<aqua>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</aqua>"
+invite-expired: "<gray>The invitation from <white><player> <gray>has expired."
+invite-expired-sender: "<gray>Your invitation to <white><player> <gray>has expired."
+no-pending-invite: "<red>You don't have any pending invitations."
+already-invited: "<red>That player already has a pending invite."
+cannot-invite-self: "<red>You can't invite yourself!"
+player-has-island: "<red>That player already has an island."
+team-full: "<red>Your island has reached the maximum member limit (<yellow><max><red>)."
+player-not-found: "<red>Player <yellow><player> <red>not found or not online."
+not-island-owner: "<red>Only the island owner can do this!"
+
+# Team — Accept/Deny
+invite-accepted: "<green>✅ You joined <white><player><green>'s island!"
+invite-accepted-owner: "<green>✅ <white><player> <green>has joined your island!"
+invite-denied: "<yellow>You declined the invitation."
+invite-denied-owner: "<yellow><player> declined your invitation."
+
+# Team — Kick
+kicked-player: "<yellow>⚠ <white><player> <yellow>has been kicked from your island."
+been-kicked: "<red>⚠ You have been kicked from <white><player><red>'s island."
+cannot-kick-self: "<red>You can't kick yourself! Use <yellow>/is leave<red> instead."
+player-not-member: "<red><player> is not a member of your island."
+
+# Team — Leave
+left-island: "<yellow>You left <white><player><yellow>'s island."
+member-left: "<yellow>⚠ <white><player> <yellow>has left your island."
+owner-cannot-leave: "<red>You're the island owner! Use <yellow>/is promote <player><red> first, or <yellow>/is delete<red>."
+
+# Team — Promote
+promoted-player: "<green>👑 <white><player> <green>is now the island owner!"
+been-promoted: "<green>👑 You are now the island owner!"
+
+# Settings
+setting-toggled-on: "<green>✅ <white><setting> <green>has been <bold>enabled</bold><green>."
+setting-toggled-off: "<red>❌ <white><setting> <red>has been <bold>disabled</bold><red>."
+
+# Unknown
+unknown-command: "<red>Unknown subcommand. Use <yellow>/is help<red> for a list of commands."

@@ -1,0 +1,227 @@
+# ========================================
+# GrandSeas Configuration
+# Structure follows AcidIsland (BentoBox addon).
+# GrandSeas specific features are under the 'grandseas:' section below.
+# ========================================
+
+acid:
+  command:
+    island: is
+    admin: isadmin
+    new-player-action: create
+    default-action: go
+  damage-op: true
+  damage-chickens: false
+  damage:
+    acid:
+      player: 1
+      monster: 5
+      animal: 5
+      item: 0
+    rain: 1
+    snow: false
+    delay: 1
+    tick-interval: 20
+  effects:
+    - CONFUSION
+    - BLINDNESS
+  acid-effect-duration: 2
+  rain-effects: []
+  rain-effect-duration: 2
+  protection:
+    helmet: false
+    full-armor: false
+    purified-water:
+      enabled: false
+      heal-amount: 4.0
+      bucket-furnace-enabled: true
+      nether-enabled: true
+      end-enabled: true
+
+world:
+  friendly-name: GrandSeas
+  world-name: grandseasWorld
+  difficulty: NORMAL
+  distance-between-islands: 64
+  protection-range: 50
+  start-x: 0
+  start-z: 0
+  offset-x: 0
+  offset-z: 0
+  island-height: 60
+  concurrent-islands: 1
+  disallow-team-member-islands: true
+  sea-height: 64
+  water-block: WATER
+  ocean-floor: true
+  make-structures: false
+  make-caves: false
+  make-decorations: true
+  max-islands: 0
+  default-game-mode: SURVIVAL
+  default-biome: WARM_OCEAN
+  ban-limit: -1
+  nether:
+    generate: false
+    islands: false
+  end:
+    generate: false
+    islands: false
+  flags:
+    PVP_OVERWORLD: false
+    ISLAND_RESPAWN: true
+    REMOVE_MOBS: true
+    BOAT: true
+    LIQUIDS_FLOWING_OUT: false
+  default-island-settings:
+    allow-visitors: true
+    mob-spawning: false
+    pvp: false
+
+island:
+  # Total players allowed on an island (owner + members)
+  max-team-size: 4
+  max-coop-size: 4
+  # Max trusted players allowed per island
+  max-trusted-size: 4
+  max-homes: 1
+  invite-timeout: 60
+  reset:
+    reset-limit: -1
+    leavers-lose-reset: false
+    kicked-keep-inventory: false
+  on-join:
+    money: false
+    inventory: false
+    health: true
+    hunger: true
+    exp: false
+    ender-chest: false
+  on-leave:
+    money: false
+    inventory: false
+    health: false
+    hunger: false
+    exp: false
+    ender-chest: false
+  create-island-on-first-login:
+    enable: false
+    delay: 5
+    abort-on-logout: true
+    teleport-player-to-island-when-created: true
+  deaths:
+    counted: true
+    max: 10
+    team-join-reset: true
+    reset-on-new-island: true
+
+protection:
+  geo-limit-settings: []
+  block-mobs: []
+  invincible-visitors:
+    - BLOCK_EXPLOSION
+    - CONTACT
+    - DROWNING
+    - ENTITY_ATTACK
+    - ENTITY_EXPLOSION
+    - FALL
+    - FALLING_BLOCK
+    - FIRE
+    - FIRE_TICK
+    - LAVA
+    - LIGHTNING
+    - MAGIC
+    - POISON
+    - PROJECTILE
+    - STARVATION
+    - SUFFOCATION
+    - THORNS
+    - WITHER
+    - DRAGON_BREATH
+    - FLY_INTO_WALL
+    - HOT_FLOOR
+    - CRAMMING
+    - VOID
+
+# --- GrandSeas Specific Settings ---
+# These settings control the custom features added by the GrandSeas plugin.
+grandseas:
+  island:
+    # Maximum level for the border upgrade.
+    max-border-level: 5
+    # How much the island border expands (in blocks) per upgrade level.
+    # E.g., if set to 15, upgrading from level 1 to 2 will expand the border by 15 blocks on all sides.
+    border-size-per-level: 15
+    # Maximum number of trusted players allowed per island.
+    max-trusted-size: 10
+    # Items that will be randomly scattered inside the island starter chest.
+    # Format: "MATERIAL:AMOUNT"
+    starter-chest-items:
+      - "ICE:2"
+      - "LAVA_BUCKET:1"
+      - "STONE_PICKAXE:1"
+      - "STONE_SHOVEL:1"
+      - "STONE_AXE:1"
+      - "COBBLESTONE:64"
+      - "OAK_PLANKS:32"
+      - "DIRT:16"
+      - "OAK_SAPLING:4"
+      - "BREAD:16"
+      - "COOKED_BEEF:8"
+      - "TORCH:16"
+  points:
+    # Default point value for blocks not listed below.
+    default-block-value: 0
+    # How often (in ticks) to automatically recalculate island points.
+    # 20 ticks = 1 second. 6000 ticks = 5 minutes.
+    auto-calc-interval: 6000
+    # Points awarded for placing specific blocks in the Point Storage or on the island.
+    blocks:
+      SPAWNER: 750
+      BEACON: 1500
+      DRAGON_EGG: 5000
+      NETHERITE_BLOCK: 400
+      DIAMOND_BLOCK: 250
+      EMERALD_BLOCK: 150
+      GOLD_BLOCK: 100
+      IRON_BLOCK: 50
+      LAPIS_BLOCK: 25
+      REDSTONE_BLOCK: 25
+      COPPER_BLOCK: 20
+  balance:
+    # Sell prices for items in the island economy.
+    # Format: MATERIAL: PRICE
+    prices:
+      SPAWNER: 500
+      BEACON: 1000
+      DRAGON_EGG: 5000
+      NETHERITE_BLOCK: 250
+      DIAMOND_BLOCK: 100
+      EMERALD_BLOCK: 100
+      GOLD_BLOCK: 50
+      IRON_BLOCK: 25
+      LAPIS_BLOCK: 10
+      REDSTONE_BLOCK: 10
+      COPPER_BLOCK: 10
+      OBSIDIAN: 5
+      DIAMOND: 10
+      EMERALD: 10
+      GOLD_INGOT: 5
+      IRON_INGOT: 2
+      COBBLESTONE: 0.1
+      DIRT: 0.1
+  upgrades:
+    # Upgrade costs and requirements for the island border.
+    # Format: LEVEL: "REQUIRED_ISLAND_LEVEL,REQUIRED_BANK_BALANCE"
+    border:
+      2: "10,2500"
+      3: "25,15000"
+      4: "50,50000"
+      5: "100,150000"
+    # Upgrade costs and requirements for the Ore Generator.
+    # Format: LEVEL: "REQUIRED_ISLAND_LEVEL,REQUIRED_BANK_BALANCE"
+    generator:
+      2: "5,1000"
+      3: "20,5000"
+      4: "40,20000"
+      5: "80,75000"
