@@ -62,14 +62,26 @@ public class AcidOceanGenerator extends ChunkGenerator {
     }
 
     // Matikan semua vanilla generation agar dunia tetap bersih
-    @Override public boolean shouldGenerateNoise()        { return false; }
-    @Override public boolean shouldGenerateSurface()      { return false; }
-    @Override public boolean shouldGenerateCaves()        { return false; }
-    @Override public boolean shouldGenerateDecorations()  { return false; }
-    @Override public boolean shouldGenerateMobs()         { return false; }
-    @Override public boolean shouldGenerateStructures()   { return false; }
+    // Dihapus @Override agar cross-version compatible (tidak error di Paper 1.26+ jika method ini dihapus dari API)
+    @SuppressWarnings("deprecation")
+    public boolean shouldGenerateNoise()        { return false; }
+    
+    @SuppressWarnings("deprecation")
+    public boolean shouldGenerateSurface()      { return false; }
+    
+    @SuppressWarnings("deprecation")
+    public boolean shouldGenerateCaves()        { return false; }
+    
+    @SuppressWarnings("deprecation")
+    public boolean shouldGenerateDecorations()  { return false; }
+    
+    @SuppressWarnings("deprecation")
+    public boolean shouldGenerateMobs()         { return false; }
+    
+    @SuppressWarnings("deprecation")
+    public boolean shouldGenerateStructures()   { return false; }
 
-    @Override
+    @SuppressWarnings("deprecation")
     public boolean canSpawn(@NotNull World world, int x, int z) {
         return true;
     }
