@@ -1,5 +1,5 @@
 name: GrandSeas
-version: '0.0.1-BETA'
+version: '0.1.0-BETA'
 main: me.rspaae.grandseas.GrandSeas
 api-version: '1.21'
 commands:
@@ -10,7 +10,7 @@ commands:
     description: Admin island command
     aliases: [acid]
     permission: grandseas.admin
-    permission-message: §cKamu tidak memiliki akses ke command ini!
+    permission-message: §cYou do not have permission to use this command!
 
 permissions:
   grandseas.admin:
