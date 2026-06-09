@@ -59,6 +59,13 @@ public class IslandCalculationTask {
             return;
         }
 
+        if (!island.getCalculatingFlag().compareAndSet(false, true)) {
+            if (requestor != null) {
+                requestor.sendMessage(Component.text("⏳ Calculation is already in progress...", NamedTextColor.YELLOW));
+            }
+            return;
+        }
+
         if (requestor != null) {
             requestor.sendActionBar(Component.text("🔍 Menghitung blok pulau...", NamedTextColor.YELLOW));
             requestor.playSound(requestor.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 0.5f, 1.5f);
@@ -95,61 +102,65 @@ public class IslandCalculationTask {
             int maxHeight = island.getCenter().getWorld().getMaxHeight();
 
             Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-                long totalPoints = 0;
+                try {
+                    long totalPoints = 0;
 
-                for (ChunkSnapshot snapshot : snapshots) {
-                    for (int x = 0; x < 16; x++) {
-                        for (int z = 0; z < 16; z++) {
-                            // Calculate absolute world coordinates to ensure we only count blocks strictly within the border
-                            int worldX = (snapshot.getX() << 4) + x;
-                            int worldZ = (snapshot.getZ() << 4) + z;
-                            
-                            // Check if this specific column is within the exact circular/square border
-                            if (worldX < minX || worldX > maxX || worldZ < minZ || worldZ > maxZ) {
-                                continue;
-                            }
-
-                            for (int y = minHeight; y < maxHeight; y++) {
-                                Material type = snapshot.getBlockType(x, y, z);
-                                if (type.isAir()) continue;
+                    for (ChunkSnapshot snapshot : snapshots) {
+                        for (int x = 0; x < 16; x++) {
+                            for (int z = 0; z < 16; z++) {
+                                // Calculate absolute world coordinates to ensure we only count blocks strictly within the border
+                                int worldX = (snapshot.getX() << 4) + x;
+                                int worldZ = (snapshot.getZ() << 4) + z;
                                 
-                                // Ignore water and lava in calculation
-                                if (type == Material.WATER || type == Material.LAVA) continue;
+                                // Check if this specific column is within the exact circular/square border
+                                if (worldX < minX || worldX > maxX || worldZ < minZ || worldZ > maxZ) {
+                                    continue;
+                                }
 
-                                totalPoints += blockValues.getOrDefault(type, defaultBlockValue);
+                                for (int y = minHeight; y < maxHeight; y++) {
+                                    Material type = snapshot.getBlockType(x, y, z);
+                                    if (type.isAir()) continue;
+                                    
+                                    // Ignore water and lava in calculation
+                                    if (type == Material.WATER || type == Material.LAVA) continue;
+
+                                    totalPoints += blockValues.getOrDefault(type, defaultBlockValue);
+                                }
                             }
                         }
                     }
-                }
 
-                final long finalPoints = totalPoints;
+                    final long finalPoints = totalPoints;
 
-                // 3. Update the island synchronously
-                Bukkit.getScheduler().runTask(plugin, () -> {
-                    long totalStoragePoints = 0;
-                    for (me.rspaae.grandseas.model.PointBlock pb : plugin.getPointBlockManager().getAll()) {
-                        if (island.isWithinBorder(pb.getLocation())) {
-                            int val = blockValues.getOrDefault(pb.getMaterial(), defaultBlockValue);
-                            if (pb.getAmount() > 1) {
-                                totalStoragePoints += (pb.getAmount() - 1) * val;
+                    // 3. Update the island synchronously
+                    Bukkit.getScheduler().runTask(plugin, () -> {
+                        long totalStoragePoints = 0;
+                        for (me.rspaae.grandseas.model.PointBlock pb : plugin.getPointBlockManager().getAll()) {
+                            if (island.isWithinBorder(pb.getLocation())) {
+                                int val = blockValues.getOrDefault(pb.getMaterial(), defaultBlockValue);
+                                if (pb.getAmount() > 1) {
+                                    totalStoragePoints += (pb.getAmount() - 1) * val;
+                                }
                             }
                         }
-                    }
-                    long actualFinalPoints = finalPoints + totalStoragePoints;
+                        long actualFinalPoints = finalPoints + totalStoragePoints;
 
-                    island.setPoints(actualFinalPoints);
-                    plugin.getIslandManager().saveIslands();
+                        island.setPoints(actualFinalPoints);
+                        plugin.getIslandManager().saveIslands();
                     
-                    if (requestor != null && requestor.isOnline()) {
-                        // Hilangkan chat message agar tidak tertimbun, ganti dengan Title
-                        requestor.sendTitle(
-                                "§b§lLEVEL PULAU: " + island.getIslandLevel(),
-                                "§eTotal Poin: §f" + String.format("%,d", actualFinalPoints),
-                                10, 70, 20
-                        );
-                        requestor.playSound(requestor.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1.0f);
-                    }
-                });
+                        if (requestor != null && requestor.isOnline()) {
+                            // Hilangkan chat message agar tidak tertimbun, ganti dengan Title
+                            requestor.sendTitle(
+                                    "§b§lLEVEL PULAU: " + island.getIslandLevel(),
+                                    "§eTotal Poin: §f" + String.format("%,d", actualFinalPoints),
+                                    10, 70, 20
+                            );
+                            requestor.playSound(requestor.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1.0f);
+                        }
+                    });
+                } finally {
+                    island.getCalculatingFlag().set(false);
+                }
             });
         });
     }

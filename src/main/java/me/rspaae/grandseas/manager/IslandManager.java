@@ -3,6 +3,7 @@ package me.rspaae.grandseas.manager;
 import me.rspaae.grandseas.GrandSeas;
 import me.rspaae.grandseas.config.GrandSeasSettings;
 import me.rspaae.grandseas.generator.AcidOceanGenerator;
+import me.rspaae.grandseas.model.AuditLog;
 import me.rspaae.grandseas.model.Island;
 import me.rspaae.grandseas.model.IslandTheme;
 import net.kyori.adventure.text.Component;
@@ -30,6 +31,14 @@ public class IslandManager {
     private final Map<UUID, UUID> pendingInvites = new HashMap<>();
     public final Set<UUID> islandChatPlayers = new HashSet<>();
     private final Set<UUID> islandCreationInProgress = new HashSet<>();
+
+    /** Admins with active bypass mode (cleared on restart). */
+    private final Set<UUID> bypassAdmins = new HashSet<>();
+
+    /** In-memory audit log: island owner UUID → list of events (max 50 per island). */
+    private final Map<UUID, java.util.LinkedList<AuditLog>> auditLogs = new HashMap<>();
+
+    private static final int MAX_AUDIT_ENTRIES = 50;
 
     private World islandWorld;
     private int nextIslandIndex = 0;
@@ -345,6 +354,7 @@ public class IslandManager {
         if (location == null || location.getWorld() == null) return true;
         if (!location.getWorld().getName().equals(getWorldName())) return true;
         if (player.hasPermission("grandseas.admin.bypass")) return true;
+        if (bypassAdmins.contains(player.getUniqueId())) return true;
 
         Island island = getIslandAt(location);
         if (island == null) {
@@ -353,12 +363,15 @@ public class IslandManager {
         }
 
         if (island.isMemberOrOwner(player.getUniqueId())) return true;
-        
+
         if (island.isTrusted(player.getUniqueId())) {
             Boolean trustedInteract = (Boolean) island.getSettings().get(Island.SETTING_TRUSTED_INTERACT);
             return trustedInteract != null && trustedInteract;
         }
-        
+
+        // Co-op players can interact
+        if (island.isActiveCoop(player.getUniqueId())) return true;
+
         return false;
     }
 
@@ -369,6 +382,7 @@ public class IslandManager {
         if (location == null || location.getWorld() == null) return true;
         if (!location.getWorld().getName().equals(getWorldName())) return true;
         if (player.hasPermission("grandseas.admin.bypass")) return true;
+        if (bypassAdmins.contains(player.getUniqueId())) return true;
 
         Island island = getIslandAt(location);
         if (island == null) {
@@ -376,12 +390,15 @@ public class IslandManager {
         }
 
         if (island.isMemberOrOwner(player.getUniqueId())) return true;
-        
+
         if (island.isTrusted(player.getUniqueId())) {
             Boolean trustedBuild = (Boolean) island.getSettings().get(Island.SETTING_TRUSTED_BUILD);
             return trustedBuild != null && trustedBuild;
         }
-        
+
+        // Co-op players can build
+        if (island.isActiveCoop(player.getUniqueId())) return true;
+
         return false;
     }
 
@@ -494,6 +511,87 @@ public class IslandManager {
 
     public Map<UUID, Island> getAllIslands() {
         return Collections.unmodifiableMap(islands);
+    }
+
+    // ==================== Admin Bypass ====================
+
+    /**
+     * Toggle admin bypass mode. Returns true if bypass is now ACTIVE, false if disabled.
+     */
+    public boolean toggleBypass(UUID adminUuid) {
+        if (bypassAdmins.contains(adminUuid)) {
+            bypassAdmins.remove(adminUuid);
+            return false;
+        } else {
+            bypassAdmins.add(adminUuid);
+            return true;
+        }
+    }
+
+    public boolean hasBypass(UUID adminUuid) {
+        return bypassAdmins.contains(adminUuid);
+    }
+
+    // ==================== Audit Log ====================
+
+    /**
+     * Add an audit log entry for a specific island (by owner UUID).
+     * The log is capped at MAX_AUDIT_ENTRIES (50) entries per island.
+     */
+    public void addAuditLog(UUID islandOwner, AuditLog log) {
+        java.util.LinkedList<AuditLog> logs = auditLogs.computeIfAbsent(islandOwner, k -> new java.util.LinkedList<>());
+        logs.addFirst(log); // newest first
+        if (logs.size() > MAX_AUDIT_ENTRIES) {
+            logs.removeLast();
+        }
+    }
+
+    /**
+     * Get audit logs for an island. Returns an empty list if none exist.
+     */
+    public java.util.List<AuditLog> getAuditLog(UUID islandOwner) {
+        return auditLogs.getOrDefault(islandOwner, new java.util.LinkedList<>());
+    }
+
+    // ==================== Admin Backup ====================
+
+    /**
+     * Create a backup of an island's data to plugins/GrandSeas/backups/.
+     * Does NOT delete the island.
+     * @return the backup file, or null on failure.
+     */
+    public File backupIsland(Island island) {
+        File backupDir = new File(plugin.getDataFolder(), "backups");
+        if (!backupDir.exists()) backupDir.mkdirs();
+
+        String ownerName = Bukkit.getOfflinePlayer(island.getOwner()).getName();
+        if (ownerName == null) ownerName = island.getOwner().toString().substring(0, 8);
+
+        String timestamp = new java.text.SimpleDateFormat("yyyyMMdd_HHmmss").format(new java.util.Date());
+        File backupFile = new File(backupDir, timestamp + "_" + ownerName + ".yml");
+
+        YamlConfiguration backup = new YamlConfiguration();
+        backup.set("owner", island.getOwner().toString());
+        backup.set("name", island.getName());
+        backup.set("points", island.getPoints());
+        backup.set("balance", island.getBalance());
+        backup.set("border-size", island.getBorderSize());
+        backup.set("border-level", island.getBorderLevel());
+        backup.set("generator-level", island.getGeneratorLevel());
+        backup.set("created-at", island.getCreatedAt());
+        backup.set("backed-up-at", System.currentTimeMillis());
+
+        java.util.List<String> memberList = new java.util.ArrayList<>();
+        for (UUID m : island.getMembers()) memberList.add(m.toString());
+        backup.set("members", memberList);
+
+        try {
+            backup.save(backupFile);
+            return backupFile;
+        } catch (IOException e) {
+            plugin.getLogger().log(Level.SEVERE, "Failed to write island backup!", e);
+            return null;
+        }
     }
 
     // ==================== Team / Invite System ====================
@@ -749,6 +847,13 @@ public class IslandManager {
             }
             islandSec.set("banned", banList);
 
+            // Save coop players
+            List<String> coopList = new ArrayList<>();
+            for (Map.Entry<UUID, Long> coopEntry : island.getCoopPlayers().entrySet()) {
+                coopList.add(coopEntry.getKey().toString() + ":" + coopEntry.getValue());
+            }
+            islandSec.set("coop", coopList);
+
             // Save settings
             Map<String, Object> settings = island.getSettings();
             for (Map.Entry<String, Object> setting : settings.entrySet()) {
@@ -868,6 +973,25 @@ public class IslandManager {
                     } catch (IllegalArgumentException ignored) {}
                 }
                 island.setBannedPlayers(bannedSet);
+
+                // Load coop players
+                List<String> coopList = islandSec.getStringList("coop");
+                Map<UUID, Long> coopMap = new HashMap<>();
+                long now = System.currentTimeMillis();
+                for (String coopStr : coopList) {
+                    try {
+                        String[] parts = coopStr.split(":");
+                        if (parts.length == 2) {
+                            UUID coopUuid = UUID.fromString(parts[0]);
+                            long expiry = Long.parseLong(parts[1]);
+                            // Only load non-expired entries
+                            if (expiry > now) {
+                                coopMap.put(coopUuid, expiry);
+                            }
+                        }
+                    } catch (Exception ignored) {}
+                }
+                island.setCoopPlayers(coopMap);
 
                 // Load settings
                 ConfigurationSection settingsSection = islandSec.getConfigurationSection("settings");

@@ -38,6 +38,10 @@ public class IslandProtectionListener implements Listener {
         if (!plugin.getIslandManager().canBuild(event.getPlayer(), event.getBlock().getLocation())) {
             event.setCancelled(true);
             event.getPlayer().sendMessage(DENY_MESSAGE);
+        } else {
+            logAudit(event.getPlayer(), event.getBlock().getLocation(), 
+                    me.rspaae.grandseas.model.AuditLog.Action.BREAK, 
+                    event.getBlock().getType().name());
         }
     }
 
@@ -46,6 +50,10 @@ public class IslandProtectionListener implements Listener {
         if (!plugin.getIslandManager().canBuild(event.getPlayer(), event.getBlock().getLocation())) {
             event.setCancelled(true);
             event.getPlayer().sendMessage(DENY_MESSAGE);
+        } else {
+            logAudit(event.getPlayer(), event.getBlock().getLocation(), 
+                    me.rspaae.grandseas.model.AuditLog.Action.BUILD, 
+                    event.getBlock().getType().name());
         }
     }
 
@@ -71,6 +79,16 @@ public class IslandProtectionListener implements Listener {
         if (!plugin.getIslandManager().canInteract(player, loc)) {
             event.setCancelled(true);
             player.sendMessage(DENY_MESSAGE);
+        }
+    }
+
+    private void logAudit(Player player, Location loc, me.rspaae.grandseas.model.AuditLog.Action action, String detail) {
+        if (!loc.getWorld().getName().equals(plugin.getIslandManager().getWorldName())) return;
+        Island island = plugin.getIslandManager().getIslandAt(loc);
+        // Only log actions done by non-owners (members, trusted, coop, admins)
+        if (island != null && !island.getOwner().equals(player.getUniqueId())) {
+            plugin.getIslandManager().addAuditLog(island.getOwner(),
+                    new me.rspaae.grandseas.model.AuditLog(player.getUniqueId(), player.getName(), action, detail));
         }
     }
 

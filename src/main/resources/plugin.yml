@@ -1,5 +1,5 @@
 name: GrandSeas
-version: '0.1.0-BETA'
+version: '0.1.5-BETA'
 main: me.rspaae.grandseas.GrandSeas
 api-version: '1.21'
 commands:

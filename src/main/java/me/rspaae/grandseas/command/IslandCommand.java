@@ -115,6 +115,9 @@ public class IslandCommand implements TabExecutor {
             case "trustlist":
                 handleTrustList(player);
                 break;
+            case "coop":
+                handleCoop(player, args);
+                break;
             case "team":
                 handleTeam(player, args);
                 break;
@@ -1050,6 +1053,140 @@ public class IslandCommand implements TabExecutor {
         }
     }
 
+    // ==================== Co-op ====================
+
+    private void handleCoop(Player player, String[] args) {
+        Island island = plugin.getIslandManager().getIslandByOwner(player.getUniqueId());
+        if (island == null) {
+            player.sendMessage(Component.text("❌ You don't have an island!", NamedTextColor.RED));
+            return;
+        }
+
+        if (args.length < 2) {
+            player.sendMessage(Component.text("━━━━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.AQUA));
+            player.sendMessage(Component.text("  🤝 Co-op Commands", NamedTextColor.AQUA));
+            player.sendMessage(Component.text("━━━━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.AQUA));
+            sendHelpLine(player, "/is coop add <player> [minutes]", "Grant temporary co-op access (default: 60 min)");
+            sendHelpLine(player, "/is coop remove <player>", "Revoke a player's co-op access");
+            sendHelpLine(player, "/is coop list", "View all active co-op players");
+            return;
+        }
+
+        switch (args[1].toLowerCase()) {
+            case "add": {
+                if (args.length < 3) {
+                    player.sendMessage(Component.text("Usage: /is coop add <player> [minutes]", NamedTextColor.RED));
+                    return;
+                }
+                Player target = Bukkit.getPlayer(args[2]);
+                if (target == null) {
+                    player.sendMessage(Component.text("❌ Player '" + args[2] + "' is not online!", NamedTextColor.RED));
+                    return;
+                }
+                if (target.equals(player)) {
+                    player.sendMessage(Component.text("❌ You can't co-op yourself!", NamedTextColor.RED));
+                    return;
+                }
+                if (island.isMemberOrOwner(target.getUniqueId())) {
+                    player.sendMessage(Component.text("❌ " + target.getName() + " is already a team member!", NamedTextColor.RED));
+                    return;
+                }
+                if (island.isBanned(target.getUniqueId())) {
+                    player.sendMessage(Component.text("❌ " + target.getName() + " is banned from your island!", NamedTextColor.RED));
+                    return;
+                }
+
+                long durationMs = me.rspaae.grandseas.model.Island.COOP_DEFAULT_DURATION_MS;
+                if (args.length >= 4) {
+                    try {
+                        long minutes = Long.parseLong(args[3]);
+                        if (minutes < 1 || minutes > 1440) {
+                            player.sendMessage(Component.text("❌ Duration must be between 1 and 1440 minutes.", NamedTextColor.RED));
+                            return;
+                        }
+                        durationMs = java.util.concurrent.TimeUnit.MINUTES.toMillis(minutes);
+                    } catch (NumberFormatException e) {
+                        player.sendMessage(Component.text("❌ Invalid duration. Use a number (in minutes).", NamedTextColor.RED));
+                        return;
+                    }
+                }
+
+                island.addCoop(target.getUniqueId(), durationMs);
+                plugin.getIslandManager().saveIslands();
+
+                long minutes = java.util.concurrent.TimeUnit.MILLISECONDS.toMinutes(durationMs);
+                player.sendMessage(Component.text("✅ " + target.getName() + " has been granted co-op access for " + minutes + " minute(s).", NamedTextColor.GREEN));
+                target.sendMessage(Component.text("🤝 You have been granted co-op access to " + player.getName() + "'s island for " + minutes + " minute(s)!", NamedTextColor.GREEN));
+
+                // Audit log
+                plugin.getIslandManager().addAuditLog(island.getOwner(),
+                        new me.rspaae.grandseas.model.AuditLog(target.getUniqueId(), target.getName(),
+                                me.rspaae.grandseas.model.AuditLog.Action.COOP_ADD,
+                                minutes + " min granted by " + player.getName()));
+                break;
+            }
+            case "remove": {
+                if (args.length < 3) {
+                    player.sendMessage(Component.text("Usage: /is coop remove <player>", NamedTextColor.RED));
+                    return;
+                }
+                // Support offline players for removal
+                org.bukkit.OfflinePlayer target = Bukkit.getOfflinePlayer(args[2]);
+                if (!island.isCoop(target.getUniqueId())) {
+                    player.sendMessage(Component.text("❌ " + args[2] + " is not a co-op player on your island!", NamedTextColor.RED));
+                    return;
+                }
+                island.removeCoop(target.getUniqueId());
+                plugin.getIslandManager().saveIslands();
+                player.sendMessage(Component.text("✅ Co-op access for " + args[2] + " has been revoked.", NamedTextColor.GREEN));
+
+                // Notify the removed player if online
+                Player onlineTarget = Bukkit.getPlayer(target.getUniqueId());
+                if (onlineTarget != null && onlineTarget.isOnline()) {
+                    onlineTarget.sendMessage(Component.text("⚠ Your co-op access to " + player.getName() + "'s island has been revoked.", NamedTextColor.YELLOW));
+                    // Kick from island if currently there
+                    if (onlineTarget.getWorld().getName().equals(plugin.getIslandManager().getWorldName())) {
+                        Island currentIsland = plugin.getIslandManager().getIslandAt(onlineTarget.getLocation());
+                        if (currentIsland != null && currentIsland.getOwner().equals(island.getOwner())) {
+                            onlineTarget.teleport(Bukkit.getWorlds().get(0).getSpawnLocation());
+                            onlineTarget.setWorldBorder(null);
+                        }
+                    }
+                }
+
+                // Audit log
+                plugin.getIslandManager().addAuditLog(island.getOwner(),
+                        new me.rspaae.grandseas.model.AuditLog(target.getUniqueId(),
+                                target.getName() != null ? target.getName() : args[2],
+                                me.rspaae.grandseas.model.AuditLog.Action.COOP_REMOVE,
+                                "Removed by " + player.getName()));
+                break;
+            }
+            case "list": {
+                if (island.getCoopPlayers().isEmpty()) {
+                    player.sendMessage(Component.text("✅ There are no active co-op players on your island.", NamedTextColor.GREEN));
+                    return;
+                }
+                player.sendMessage(Component.text("🤝 Active Co-op Players:", NamedTextColor.AQUA));
+                long now = System.currentTimeMillis();
+                int i = 1;
+                for (java.util.Map.Entry<UUID, Long> entry : island.getCoopPlayers().entrySet()) {
+                    long remaining = entry.getValue() - now;
+                    if (remaining <= 0) continue;
+                    long mins = java.util.concurrent.TimeUnit.MILLISECONDS.toMinutes(remaining);
+                    String name = Bukkit.getOfflinePlayer(entry.getKey()).getName();
+                    player.sendMessage(Component.text(" " + i + ". ", NamedTextColor.DARK_GRAY)
+                            .append(Component.text(name != null ? name : "Unknown", NamedTextColor.WHITE))
+                            .append(Component.text(" — " + mins + " min remaining", NamedTextColor.GRAY)));
+                    i++;
+                }
+                break;
+            }
+            default:
+                player.sendMessage(Component.text("Usage: /is coop <add|remove|list>", NamedTextColor.RED));
+        }
+    }
+
     // ==================== Help ====================
 
     private void sendHelp(Player player) {
@@ -1074,6 +1211,9 @@ public class IslandCommand implements TabExecutor {
         sendHelpLine(player, "/is trust <player>", "Trust a player");
         sendHelpLine(player, "/is untrust <player>", "Untrust a player");
         sendHelpLine(player, "/is trustlist", "View trusted players");
+        sendHelpLine(player, "/is coop add <player> [min]", "Grant temporary co-op access");
+        sendHelpLine(player, "/is coop remove <player>", "Revoke co-op access");
+        sendHelpLine(player, "/is coop list", "View active co-op players");
         sendHelpLine(player, "/is ban <player>", "Ban player from island");
         sendHelpLine(player, "/is unban <player>", "Unban player");
         sendHelpLine(player, "/is banlist", "View banned players");
@@ -1110,7 +1250,7 @@ public class IslandCommand implements TabExecutor {
 
         if (args.length == 1) {
             String input = args[0].toLowerCase();
-            String[] subs = {"create", "settings", "upgrades", "balance", "chat", "rename", "pay", "transfer", "visit", "trust", "untrust", "trustlist", "ban", "unban", "banlist", "delete", "team", "top", "reload", "info", "sethome", "help"};
+            String[] subs = {"create", "settings", "upgrades", "balance", "chat", "rename", "pay", "transfer", "visit", "trust", "untrust", "trustlist", "coop", "ban", "unban", "banlist", "delete", "team", "top", "reload", "info", "sethome", "help"};
             for (String sub : subs) {
                 if (sub.startsWith(input)) {
                     completions.add(sub);

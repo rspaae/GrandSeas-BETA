@@ -61,6 +61,20 @@ public class IslandAdminCommand implements TabExecutor {
             case "reload":
                 handleReload(sender);
                 break;
+            case "list":
+                handleList(sender, args);
+                break;
+            case "backup":
+                if (args.length < 2) { sender.sendMessage(Component.text("Usage: /isadmin backup <player>", NamedTextColor.RED)); return true; }
+                handleBackup(sender, args[1]);
+                break;
+            case "bypass":
+                handleBypass(sender);
+                break;
+            case "audit":
+                if (args.length < 2) { sender.sendMessage(Component.text("Usage: /isadmin audit <player>", NamedTextColor.RED)); return true; }
+                handleAudit(sender, args[1]);
+                break;
             default:
                 sendHelp(sender);
         }
@@ -186,6 +200,108 @@ public class IslandAdminCommand implements TabExecutor {
         sender.sendMessage(Component.text("✅ GrandSeas config reloaded successfully!", NamedTextColor.GREEN));
     }
 
+    private void handleList(CommandSender sender, String[] args) {
+        java.util.Collection<me.rspaae.grandseas.model.Island> all =
+                plugin.getIslandManager().getAllIslands().values();
+        if (all.isEmpty()) {
+            sender.sendMessage(Component.text("ℹ No islands found.", NamedTextColor.GRAY));
+            return;
+        }
+
+        int page = 1;
+        if (args.length >= 2) {
+            try { page = Math.max(1, Integer.parseInt(args[1])); } catch (NumberFormatException ignored) {}
+        }
+        int perPage = 10;
+        java.util.List<me.rspaae.grandseas.model.Island> sorted = new java.util.ArrayList<>(all);
+        sorted.sort((a, b) -> Long.compare(b.getPoints(), a.getPoints()));
+
+        int totalPages = (int) Math.ceil(sorted.size() / (double) perPage);
+        page = Math.min(page, totalPages);
+        int start = (page - 1) * perPage;
+        int end = Math.min(start + perPage, sorted.size());
+
+        sender.sendMessage(Component.text("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.RED));
+        sender.sendMessage(Component.text("  All Islands — Page " + page + "/" + totalPages, NamedTextColor.RED, net.kyori.adventure.text.format.TextDecoration.BOLD));
+        sender.sendMessage(Component.text("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.RED));
+        for (int i = start; i < end; i++) {
+            me.rspaae.grandseas.model.Island island = sorted.get(i);
+            String ownerName = Bukkit.getOfflinePlayer(island.getOwner()).getName();
+            if (ownerName == null) ownerName = island.getOwner().toString().substring(0, 8);
+            sender.sendMessage(Component.text(" " + (i + 1) + ". ", NamedTextColor.DARK_GRAY)
+                    .append(Component.text(island.getName(), NamedTextColor.WHITE))
+                    .append(Component.text(" (" + ownerName + ")", NamedTextColor.GRAY))
+                    .append(Component.text(" — ", NamedTextColor.DARK_GRAY))
+                    .append(Component.text(String.format("%,d pts", island.getPoints()), NamedTextColor.YELLOW))
+                    .append(Component.text(" | ", NamedTextColor.DARK_GRAY))
+                    .append(Component.text((island.getMembers().size() + 1) + " members", NamedTextColor.AQUA)));
+        }
+        sender.sendMessage(Component.text("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.RED));
+    }
+
+    private void handleBackup(CommandSender sender, String targetName) {
+        OfflinePlayer target = Bukkit.getOfflinePlayer(targetName);
+        Island island = plugin.getIslandManager().getIsland(target.getUniqueId());
+        if (island == null) {
+            sender.sendMessage(Component.text("❌ " + targetName + " doesn't have an island.", NamedTextColor.RED));
+            return;
+        }
+        java.io.File file = plugin.getIslandManager().backupIsland(island);
+        if (file != null) {
+            sender.sendMessage(Component.text("✅ Backup created: " + file.getName(), NamedTextColor.GREEN));
+        } else {
+            sender.sendMessage(Component.text("❌ Failed to create backup! Check console for details.", NamedTextColor.RED));
+        }
+    }
+
+    private void handleBypass(CommandSender sender) {
+        if (!(sender instanceof Player)) {
+            sender.sendMessage("Only players can toggle bypass mode.");
+            return;
+        }
+        Player admin = (Player) sender;
+        boolean active = plugin.getIslandManager().toggleBypass(admin.getUniqueId());
+        if (active) {
+            admin.sendMessage(Component.text("⚠ Admin bypass mode ENABLED. You can now build/interact on any island.", NamedTextColor.YELLOW));
+        } else {
+            admin.sendMessage(Component.text("✅ Admin bypass mode DISABLED. Island protections are now active for you.", NamedTextColor.GREEN));
+        }
+    }
+
+    private void handleAudit(CommandSender sender, String targetName) {
+        OfflinePlayer target = Bukkit.getOfflinePlayer(targetName);
+        Island island = plugin.getIslandManager().getIsland(target.getUniqueId());
+        if (island == null) {
+            sender.sendMessage(Component.text("❌ " + targetName + " doesn't have an island.", NamedTextColor.RED));
+            return;
+        }
+        java.util.List<me.rspaae.grandseas.model.AuditLog> logs =
+                plugin.getIslandManager().getAuditLog(island.getOwner());
+        if (logs.isEmpty()) {
+            sender.sendMessage(Component.text("ℹ No audit entries found for " + targetName + "'s island.", NamedTextColor.GRAY));
+            return;
+        }
+        sender.sendMessage(Component.text("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.RED));
+        sender.sendMessage(Component.text("  Audit Log: " + island.getName(), NamedTextColor.RED, net.kyori.adventure.text.format.TextDecoration.BOLD));
+        sender.sendMessage(Component.text("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.RED));
+        int shown = Math.min(10, logs.size());
+        for (int i = 0; i < shown; i++) {
+            me.rspaae.grandseas.model.AuditLog log = logs.get(i);
+            NamedTextColor color = switch (log.getAction()) {
+                case BUILD -> NamedTextColor.GREEN;
+                case BREAK -> NamedTextColor.RED;
+                case VISIT -> NamedTextColor.AQUA;
+                case COOP_ADD, COOP_REMOVE, COOP_EXPIRE -> NamedTextColor.YELLOW;
+                default -> NamedTextColor.GRAY;
+            };
+            sender.sendMessage(Component.text(" [" + log.getFormattedTime() + "] ", NamedTextColor.DARK_GRAY)
+                    .append(Component.text(log.getActorName() + " ", NamedTextColor.WHITE))
+                    .append(Component.text(log.getAction().name(), color))
+                    .append(Component.text(log.getDetail().isEmpty() ? "" : " — " + log.getDetail(), NamedTextColor.GRAY)));
+        }
+        sender.sendMessage(Component.text("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.RED));
+    }
+
     private void sendHelp(CommandSender sender) {
         sender.sendMessage(Component.text("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.RED));
         sender.sendMessage(Component.text("  GrandSeas Admin Commands", NamedTextColor.RED, TextDecoration.BOLD));
@@ -195,6 +311,10 @@ public class IslandAdminCommand implements TabExecutor {
         sender.sendMessage(Component.text(" /isadmin info <player>", NamedTextColor.YELLOW).append(Component.text(" — Island details", NamedTextColor.GRAY)));
         sender.sendMessage(Component.text(" /isadmin setpoints <player> <n>", NamedTextColor.YELLOW).append(Component.text(" — Set island points", NamedTextColor.GRAY)));
         sender.sendMessage(Component.text(" /isadmin eco <give|take|set> <p> <n>", NamedTextColor.YELLOW).append(Component.text(" — Admin island bank", NamedTextColor.GRAY)));
+        sender.sendMessage(Component.text(" /isadmin list [page]", NamedTextColor.YELLOW).append(Component.text(" — List all islands", NamedTextColor.GRAY)));
+        sender.sendMessage(Component.text(" /isadmin backup <player>", NamedTextColor.YELLOW).append(Component.text(" — Backup island data", NamedTextColor.GRAY)));
+        sender.sendMessage(Component.text(" /isadmin bypass", NamedTextColor.YELLOW).append(Component.text(" — Toggle protection bypass", NamedTextColor.GRAY)));
+        sender.sendMessage(Component.text(" /isadmin audit <player>", NamedTextColor.YELLOW).append(Component.text(" — View island audit log", NamedTextColor.GRAY)));
         sender.sendMessage(Component.text(" /isadmin reload", NamedTextColor.YELLOW).append(Component.text(" — Reload config", NamedTextColor.GRAY)));
         sender.sendMessage(Component.text("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.RED));
     }
@@ -205,7 +325,7 @@ public class IslandAdminCommand implements TabExecutor {
         if (!sender.hasPermission("grandseas.admin")) return completions;
 
         if (args.length == 1) {
-            String[] subs = {"tp", "delete", "info", "setpoints", "eco", "reload"};
+            String[] subs = {"tp", "delete", "info", "setpoints", "eco", "list", "backup", "bypass", "audit", "reload"};
             for (String sub : subs) {
                 if (sub.startsWith(args[0].toLowerCase())) completions.add(sub);
             }
@@ -215,7 +335,7 @@ public class IslandAdminCommand implements TabExecutor {
                 for (String sub : subs) {
                     if (sub.startsWith(args[1].toLowerCase())) completions.add(sub);
                 }
-            } else if (!args[0].equalsIgnoreCase("reload")) {
+            } else if (!args[0].equalsIgnoreCase("reload") && !args[0].equalsIgnoreCase("bypass")) {
                 for (Player p : Bukkit.getOnlinePlayers()) {
                     if (p.getName().toLowerCase().startsWith(args[1].toLowerCase())) {
                         completions.add(p.getName());

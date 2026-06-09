@@ -8,12 +8,15 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 public class Island {
     private UUID owner;
     private Set<UUID> members;
     private Set<UUID> trustedPlayers;
     private Set<UUID> bannedPlayers;
+    /** Co-op players: UUID -> expiry timestamp (epoch ms). */
+    private Map<UUID, Long> coopPlayers;
     private Location center;
     private Location home;
     private IslandTheme theme;
@@ -25,6 +28,11 @@ public class Island {
     private long createdAt;
     private String name;
     private Map<String, Object> settings;
+    
+    private transient final java.util.concurrent.atomic.AtomicBoolean calculating = new java.util.concurrent.atomic.AtomicBoolean(false);
+
+    /** Default co-op duration: 60 minutes */
+    public static final long COOP_DEFAULT_DURATION_MS = TimeUnit.MINUTES.toMillis(60);
 
     public static int getDefaultBorderSize() {
         GrandSeasSettings s = GrandSeasSettings.get();
@@ -64,6 +72,7 @@ public class Island {
         this.members = new HashSet<>();
         this.trustedPlayers = new HashSet<>();
         this.bannedPlayers = new HashSet<>();
+        this.coopPlayers = new HashMap<>();
         this.settings = new HashMap<>();
         this.borderLevel = 1;
         this.generatorLevel = 1;
@@ -71,7 +80,7 @@ public class Island {
         this.points = 0;
         this.balance = 0.0;
         org.bukkit.entity.Player p = org.bukkit.Bukkit.getPlayer(owner);
-        this.name = "Pulau " + (p != null ? p.getName() : owner.toString().substring(0, 8));
+        this.name = p != null ? p.getName() + "'s Island" : "Island " + owner.toString().substring(0, 8);
         this.createdAt = System.currentTimeMillis();
         initDefaultSettings();
     }
@@ -92,6 +101,8 @@ public class Island {
 
     public String getName() { return name != null ? name : "Pulau " + owner.toString().substring(0, 8); }
     public void setName(String name) { this.name = name; }
+    
+    public java.util.concurrent.atomic.AtomicBoolean getCalculatingFlag() { return calculating; }
 
     public UUID getOwner() {
         return owner;
@@ -124,6 +135,13 @@ public class Island {
         return isMemberOrOwner(uuid) || isTrusted(uuid);
     }
 
+    /**
+     * Returns true if the player is owner, member, trusted, OR an active (non-expired) co-op player.
+     */
+    public boolean isMemberOrOwnerOrTrustedOrCoop(UUID uuid) {
+        return isMemberOrOwner(uuid) || isTrusted(uuid) || isActiveCoop(uuid);
+    }
+
     // ==================== Trust System ====================
 
     public Set<UUID> getTrustedPlayers() {
@@ -144,6 +162,69 @@ public class Island {
 
     public boolean isTrusted(UUID uuid) {
         return trustedPlayers.contains(uuid);
+    }
+
+    // ==================== Co-op System ====================
+
+    public Map<UUID, Long> getCoopPlayers() {
+        return coopPlayers;
+    }
+
+    public void setCoopPlayers(Map<UUID, Long> coopPlayers) {
+        this.coopPlayers = coopPlayers != null ? coopPlayers : new HashMap<>();
+    }
+
+    /**
+     * Add a player as a co-op with a given duration in milliseconds.
+     */
+    public void addCoop(UUID uuid, long durationMs) {
+        coopPlayers.put(uuid, System.currentTimeMillis() + durationMs);
+    }
+
+    public void removeCoop(UUID uuid) {
+        coopPlayers.remove(uuid);
+    }
+
+    /**
+     * Returns true only if the player is in the co-op list AND their session hasn't expired.
+     */
+    public boolean isActiveCoop(UUID uuid) {
+        Long expiry = coopPlayers.get(uuid);
+        if (expiry == null) return false;
+        if (System.currentTimeMillis() > expiry) {
+            // Auto-clean expired entry
+            coopPlayers.remove(uuid);
+            return false;
+        }
+        return true;
+    }
+
+    public boolean isCoop(UUID uuid) {
+        return coopPlayers.containsKey(uuid);
+    }
+
+    /**
+     * Returns the expiry timestamp (epoch ms) for a co-op player, or -1 if not found.
+     */
+    public long getCoopExpiry(UUID uuid) {
+        return coopPlayers.getOrDefault(uuid, -1L);
+    }
+
+    /**
+     * Remove all expired co-op entries. Called by CoopExpiryTask.
+     * Returns set of UUIDs that were removed.
+     */
+    public Set<UUID> purgeExpiredCoop() {
+        long now = System.currentTimeMillis();
+        Set<UUID> expired = new HashSet<>();
+        coopPlayers.entrySet().removeIf(entry -> {
+            if (now > entry.getValue()) {
+                expired.add(entry.getKey());
+                return true;
+            }
+            return false;
+        });
+        return expired;
     }
 
     // ==================== Ban System ====================
@@ -251,6 +332,7 @@ public class Island {
      */
     public boolean isWithinBorder(Location loc) {
         if (center == null || loc == null) return false;
+        if (center.getWorld() == null || loc.getWorld() == null) return false;
         if (!center.getWorld().equals(loc.getWorld())) return false;
 
         int radius = getBorderRadius();

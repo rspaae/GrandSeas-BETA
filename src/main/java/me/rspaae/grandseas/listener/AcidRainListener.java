@@ -56,9 +56,15 @@ public class AcidRainListener extends BukkitRunnable {
             }
 
             double rainDamage = settings.getAcidRainDamage();
-            if (settings.isAcidSnowDamage() && player.getWorld().hasStorm()) {
-                rainDamage = settings.getAcidRainDamage();
+            
+            // Check if player is in a cold biome where it snows instead of raining
+            double temp = player.getLocation().getBlock().getTemperature();
+            boolean isSnowing = temp < 0.15;
+            
+            if (isSnowing && !settings.isAcidSnowDamage()) {
+                continue;
             }
+            
             if (rainDamage <= 0) {
                 continue;
             }

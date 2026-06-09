@@ -14,6 +14,7 @@ import me.rspaae.grandseas.listener.PlayerChatListener;
 import me.rspaae.grandseas.listener.PointBlockListener;
 import me.rspaae.grandseas.manager.PointBlockManager;
 import me.rspaae.grandseas.task.AcidDamageTask;
+import me.rspaae.grandseas.task.CoopExpiryTask;
 import org.bukkit.generator.ChunkGenerator;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
@@ -58,6 +59,8 @@ public class GrandSeas extends JavaPlugin {
         long acidInterval = settings.getAcidTickInterval();
         new AcidDamageTask(this).runTaskTimer(this, 20L, acidInterval);
         new AcidRainListener(this).runTaskTimer(this, 40L, 40L);
+        // Check and purge expired co-op sessions every 60 seconds
+        new CoopExpiryTask(this).runTaskTimer(this, 1200L, 1200L);
 
         // AutoCalc has been removed to prevent race conditions and save performance.
         // Points are now updated via manual calculation or instant PointStorageGUI updates.
