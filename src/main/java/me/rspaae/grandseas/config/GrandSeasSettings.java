@@ -81,7 +81,7 @@ public class GrandSeasSettings {
     }
 
     public boolean isHelmetProtectsFromRain() {
-        return config.getBoolean("acid.protection.helmet", false);
+        return config.getBoolean("acid.protection.helmet", true);
     }
 
     public boolean isFullArmorProtectsFromAcid() {
@@ -102,6 +102,44 @@ public class GrandSeasSettings {
 
     public List<PotionEffectType> getRainEffects() {
         return parseEffects(config.getStringList("acid.rain-effects"));
+    }
+
+    /**
+     * Potion effects that are valid for acid/rain application.
+     * Effects not in this list will be filtered out.
+     */
+    public static final List<PotionEffectType> VALID_ACID_EFFECTS;
+    static {
+        List<PotionEffectType> list = new ArrayList<>();
+        addEffectIfExists(list, "BLINDNESS");
+        addEffectIfExists(list, "NAUSEA");
+        addEffectIfExists(list, "HUNGER");
+        addEffectIfExists(list, "SLOWNESS");
+        addEffectIfExists(list, "MINING_FATIGUE");
+        addEffectIfExists(list, "WEAKNESS");
+        addEffectIfExists(list, "POISON");
+        addEffectIfExists(list, "DARKNESS");
+        addEffectIfExists(list, "UNLUCK");
+        VALID_ACID_EFFECTS = Collections.unmodifiableList(list);
+    }
+
+    /**
+     * Potion effects that grant immunity to acid/rain damage.
+     * WATER_BREATHING and CONDUIT_POWER make players immune.
+     */
+    public static final List<PotionEffectType> IMMUNE_EFFECTS;
+    static {
+        List<PotionEffectType> list = new ArrayList<>();
+        addEffectIfExists(list, "WATER_BREATHING");
+        addEffectIfExists(list, "CONDUIT_POWER");
+        IMMUNE_EFFECTS = Collections.unmodifiableList(list);
+    }
+
+    private static void addEffectIfExists(List<PotionEffectType> list, String name) {
+        PotionEffectType type = PotionEffectType.getByName(name);
+        if (type != null) {
+            list.add(type);
+        }
     }
 
     public boolean isIslandRespawnEnabled() {

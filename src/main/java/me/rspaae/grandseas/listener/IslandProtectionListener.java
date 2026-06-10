@@ -139,7 +139,7 @@ public class IslandProtectionListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onCreatureSpawn(CreatureSpawnEvent event) {
-        // Hanya izinkan mob spawn dari SPAWNER, kecuali setting pulau mengizinkan
+        // Only allow mob spawns from SPAWNER blocks, unless the island setting allows natural spawning
         if (event.getLocation().getWorld() != null
                 && event.getLocation().getWorld().getName().equals(plugin.getIslandManager().getWorldName())) {
             
@@ -156,7 +156,7 @@ public class IslandProtectionListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGH)
     public void onEntityDeath(EntityDeathEvent event) {
-        // Hapus semua drop item dari entity yang mati di island world
+        // Clear all item drops from entities that die in the island world
         if (event.getEntity().getWorld().getName().equals(plugin.getIslandManager().getWorldName())) {
             event.getDrops().clear();
             event.setDroppedExp(0);

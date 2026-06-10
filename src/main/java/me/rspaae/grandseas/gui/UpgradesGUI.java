@@ -228,11 +228,11 @@ public class UpgradesGUI extends AbstractGUI {
                     }
                     
                     clicker.playSound(clicker.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
-                    clicker.sendMessage(Component.text("🎊 Border diupgrade ke Level " + island.getBorderLevel() + "!", NamedTextColor.GREEN));
+                    clicker.sendMessage(Component.text("🎊 Border upgraded to Level " + island.getBorderLevel() + "!", NamedTextColor.GREEN));
                     initializeItems();
                 } else {
                     clicker.playSound(clicker.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
-                    clicker.sendMessage(Component.text("Border sudah mencapai level maksimal!", NamedTextColor.RED));
+                    clicker.sendMessage(Component.text("Border has reached the maximum level!", NamedTextColor.RED));
                 }
             } else {
                 clicker.playSound(clicker.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
@@ -259,11 +259,11 @@ public class UpgradesGUI extends AbstractGUI {
                     island.removeBalance(requiredBalance);
                     plugin.getIslandManager().saveIslands();
                     clicker.playSound(clicker.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
-                    clicker.sendMessage(Component.text("🎊 Ore Generator diupgrade ke Level " + island.getGeneratorLevel() + "!", NamedTextColor.GREEN));
+                    clicker.sendMessage(Component.text("🎊 Ore Generator upgraded to Level " + island.getGeneratorLevel() + "!", NamedTextColor.GREEN));
                     initializeItems();
                 } else {
                     clicker.playSound(clicker.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
-                    clicker.sendMessage(Component.text("Generator sudah mencapai level maksimal!", NamedTextColor.RED));
+                    clicker.sendMessage(Component.text("Generator has reached the maximum level!", NamedTextColor.RED));
                 }
             } else {
                 clicker.playSound(clicker.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);

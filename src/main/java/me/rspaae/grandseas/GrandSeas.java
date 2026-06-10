@@ -7,7 +7,6 @@ import me.rspaae.grandseas.listener.PlayerListener;
 import me.rspaae.grandseas.manager.CommandManager;
 import me.rspaae.grandseas.manager.ConfigManager;
 import me.rspaae.grandseas.manager.IslandManager;
-import me.rspaae.grandseas.listener.AcidRainListener;
 import me.rspaae.grandseas.listener.FluidFlowListener;
 import me.rspaae.grandseas.listener.OreGeneratorListener;
 import me.rspaae.grandseas.listener.PlayerChatListener;
@@ -26,6 +25,7 @@ public class GrandSeas extends JavaPlugin {
     private ConfigManager configManager;
     private CommandManager commandManager;
     private PointBlockManager pointBlockManager;
+    private AcidDamageTask acidDamageTask;
 
     @Override
     public void onEnable() {
@@ -55,15 +55,15 @@ public class GrandSeas extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new OreGeneratorListener(this), this);
         getServer().getPluginManager().registerEvents(new PointBlockListener(this), this);
 
-        var settings = getConfigManager().getSettings();
-        long acidInterval = settings.getAcidTickInterval();
-        new AcidDamageTask(this).runTaskTimer(this, 20L, acidInterval);
-        new AcidRainListener(this).runTaskTimer(this, 40L, 40L);
+        // Acid damage system — event-driven (AcidIsland style).
+        // Handles acid water damage + acid rain damage via per-player BukkitRunnables
+        // triggered from PlayerMoveEvent, with armor corrosion, immune potion effects,
+        // rain cover checks, boat safety, and more.
+        this.acidDamageTask = new AcidDamageTask(this);
+        getServer().getPluginManager().registerEvents(this.acidDamageTask, this);
+
         // Check and purge expired co-op sessions every 60 seconds
         new CoopExpiryTask(this).runTaskTimer(this, 1200L, 1200L);
-
-        // AutoCalc has been removed to prevent race conditions and save performance.
-        // Points are now updated via manual calculation or instant PointStorageGUI updates.
 
         // Start Auto-Save Task (every 5 minutes = 6000 ticks)
         new me.rspaae.grandseas.task.AutoSaveTask(this).runTaskTimer(this, 6000L, 6000L);
@@ -93,6 +93,11 @@ public class GrandSeas extends JavaPlugin {
             this.pointBlockManager.save();
         }
 
+        // Cleanup acid damage maps
+        if (this.acidDamageTask != null) {
+            this.acidDamageTask.cleanup();
+        }
+
         getLogger().info("");
         getLogger().info("  [GrandSeas] Saving data and shutting down...");
         getLogger().info("  [GrandSeas] Plugin successfully disabled!");
@@ -118,5 +123,9 @@ public class GrandSeas extends JavaPlugin {
 
     public PointBlockManager getPointBlockManager() {
         return pointBlockManager;
+    }
+
+    public AcidDamageTask getAcidDamageTask() {
+        return acidDamageTask;
     }
 }

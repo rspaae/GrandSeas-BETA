@@ -14,22 +14,38 @@ acid:
   damage-chickens: false
   damage:
     acid:
-      player: 1
+      player: 10
       monster: 5
       animal: 5
       item: 0
     rain: 1
     snow: false
-    delay: 1
+    # Delay in seconds before acid/rain damage starts
+    delay: 2
+    # How often (in ticks) the acid effect ticks. 20 ticks = 1 second.
     tick-interval: 20
+  # Potion effects applied when burning in acid water.
+  # Valid: BLINDNESS, NAUSEA, HUNGER, SLOWNESS, MINING_FATIGUE, WEAKNESS, POISON, DARKNESS, UNLUCK
   effects:
-    - CONFUSION
     - BLINDNESS
-  acid-effect-duration: 2
-  rain-effects: []
-  rain-effect-duration: 2
+    - NAUSEA
+    - HUNGER
+    - SLOWNESS
+    - MINING_FATIGUE
+    - WEAKNESS
+  # Duration (in seconds) of acid potion effects
+  acid-effect-duration: 30
+  # Potion effects applied when standing in acid rain.
+  # Leave empty [] for no rain effects.
+  rain-effects:
+    - BLINDNESS
+    - NAUSEA
+  # Duration (in seconds) of rain potion effects
+  rain-effect-duration: 10
   protection:
-    helmet: false
+    # Any helmet protects from acid rain (not just turtle helmet)
+    helmet: true
+    # Full armor set protects from acid water
     full-armor: false
     purified-water:
       enabled: false

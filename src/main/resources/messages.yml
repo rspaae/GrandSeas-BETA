@@ -17,6 +17,13 @@ teleported-home: "<green>🏝 Teleported to your island!"
 teleported-center: "<green>🏝 Teleported to your island center!"
 no-home: "<red>Could not find your island location."
 
+# Acid
+acid-burning: "<red>☠ THE ACID IS BURNING YOU! ☠"
+acid-rain-burning: "<dark_red>☂ ACID RAIN IS BURNING YOU! ☂"
+acid-safe-armor: "<gray>Your armor is protecting you from the acid."
+acid-armor-broken: "<yellow>⚠ Your armor has been destroyed by the acid!"
+acid-immune: "<green>You are immune to acid damage."
+
 # Team — Invite
 invite-sent: "<green>✉ Invitation sent to <white><player><green>! They have <yellow>60 seconds<green> to accept."
 invite-received: "<aqua>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</aqua>\n<green>✉ <white><player> <green>invited you to their island!\n<yellow>Type <gold>/is accept <yellow>to join or <red>/is deny <yellow>to decline.\n<aqua>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</aqua>"

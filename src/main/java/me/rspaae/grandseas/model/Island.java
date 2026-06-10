@@ -99,7 +99,7 @@ public class Island {
         settings.putIfAbsent(SETTING_TRUSTED_INTERACT, true);
     }
 
-    public String getName() { return name != null ? name : "Pulau " + owner.toString().substring(0, 8); }
+    public String getName() { return name != null ? name : "Island " + owner.toString().substring(0, 8); }
     public void setName(String name) { this.name = name; }
     
     public java.util.concurrent.atomic.AtomicBoolean getCalculatingFlag() { return calculating; }

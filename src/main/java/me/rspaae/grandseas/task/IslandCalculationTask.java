@@ -67,7 +67,7 @@ public class IslandCalculationTask {
         }
 
         if (requestor != null) {
-            requestor.sendActionBar(Component.text("🔍 Menghitung blok pulau...", NamedTextColor.YELLOW));
+            requestor.sendActionBar(Component.text("🔍 Calculating island blocks...", NamedTextColor.YELLOW));
             requestor.playSound(requestor.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 0.5f, 1.5f);
         }
 
@@ -151,8 +151,8 @@ public class IslandCalculationTask {
                         if (requestor != null && requestor.isOnline()) {
                             // Hilangkan chat message agar tidak tertimbun, ganti dengan Title
                             requestor.sendTitle(
-                                    "§b§lLEVEL PULAU: " + island.getIslandLevel(),
-                                    "§eTotal Poin: §f" + String.format("%,d", actualFinalPoints),
+                                    "§b§lISLAND LEVEL: " + island.getIslandLevel(),
+                                    "§eTotal Points: §f" + String.format("%,d", actualFinalPoints),
                                     10, 70, 20
                             );
                             requestor.playSound(requestor.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1.0f);

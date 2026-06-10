@@ -50,7 +50,7 @@ public class IslandCommand implements TabExecutor {
                     if (timeLeft > 0) {
                         long minutes = timeLeft / 60000;
                         long seconds = (timeLeft % 60000) / 1000;
-                        player.sendMessage(Component.text("⏳ Kamu baru saja menghapus pulaumu! Tunggu " + minutes + " menit " + seconds + " detik sebelum membuat pulau baru.", NamedTextColor.RED));
+                        player.sendMessage(Component.text("⏳ You recently deleted your island! Wait " + minutes + "m " + seconds + "s before creating a new one.", NamedTextColor.RED));
                         player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
                         return true;
                     }

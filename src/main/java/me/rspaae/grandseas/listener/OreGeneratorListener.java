@@ -25,7 +25,7 @@ public class OreGeneratorListener implements Listener {
         BlockState newState = event.getNewState();
         if (newState.getType() == Material.COBBLESTONE || newState.getType() == Material.STONE) {
             
-            // Periksa apakah block tersebut berada di dalam pulau (radius)
+            // Check if the block is located inside an island (radius)
             if (event.getBlock().getWorld().getName().equals(plugin.getIslandManager().getIslandWorld().getName())) {
                 Island island = plugin.getIslandManager().getIslandAt(event.getBlock().getLocation());
                 

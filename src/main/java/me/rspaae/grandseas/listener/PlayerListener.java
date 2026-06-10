@@ -36,7 +36,7 @@ public class PlayerListener implements Listener {
             }
         }, 40L); // 2 second delay - enough for client to load
 
-        // Jika player pertama kali join dan belum punya island
+        // If player joins for the first time and has no island yet
         if (!player.hasPlayedBefore()) {
             Island island = plugin.getIslandManager().getIsland(player.getUniqueId());
             if (island == null) {
@@ -86,14 +86,14 @@ public class PlayerListener implements Listener {
                 plugin.getIslandManager().updatePlayerBorder(event.getPlayer(), event.getTo()));
     }
 
-    // ── #2 RESPAWN DI ISLAND SENDIRI ───────────────────────────────
+    // ── #2 RESPAWN ON OWN ISLAND ─────────────────────────────────────
     @EventHandler(priority = EventPriority.HIGH)
     public void onPlayerRespawn(PlayerRespawnEvent event) {
         Player player = event.getPlayer();
         Island island = plugin.getIslandManager().getIsland(player.getUniqueId());
 
         if (island != null) {
-            // Utamakan home yang sudah di-set pemain, lalu center
+            // Prefer the home location set by the player, otherwise use the island center
             Location respawn = island.getHome() != null ? island.getHome() : island.getCenter();
             if (respawn != null) {
                 event.setRespawnLocation(respawn);
@@ -101,7 +101,7 @@ public class PlayerListener implements Listener {
             }
         }
 
-        // Jika tidak punya island, respawn di spawn dunia utama
+        // If no island, respawn at the main world spawn
         event.setRespawnLocation(org.bukkit.Bukkit.getWorlds().get(0).getSpawnLocation());
     }
 

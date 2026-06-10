@@ -3,9 +3,9 @@ package me.rspaae.grandseas.model;
 import org.bukkit.Material;
 
 public enum IslandTheme {
-    CLASSIC(Material.GRASS_BLOCK, "Classic Island", "Pulau standar dengan rumput dan pohon oak.", "starter_classic"),
-    SANDY(Material.SAND, "Sandy Island", "Pulau berpasir bergaya tropis.", "starter_sandy"),
-    ROCKY(Material.COBBLESTONE, "Rocky Island", "Pulau berbatu dengan sedikit tanah.", "starter_rocky");
+    CLASSIC(Material.GRASS_BLOCK, "Classic Island", "Standard island with grass and an oak tree.", "starter_classic"),
+    SANDY(Material.SAND, "Sandy Island", "Tropical-style sandy island.", "starter_sandy"),
+    ROCKY(Material.COBBLESTONE, "Rocky Island", "Rocky island with very little soil.", "starter_rocky");
 
     private final Material icon;
     private final String displayName;

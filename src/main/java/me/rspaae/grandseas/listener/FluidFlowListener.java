@@ -8,8 +8,8 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockFromToEvent;
 
 /**
- * Mencegah air/lava mengalir keluar dari border island ke laut acid.
- * Tanpa ini, water source di island bisa "bocor" ke seluruh lautan.
+ * Prevents water/lava from flowing outside an island's border into the acid ocean.
+ * Without this, water sources on islands could "leak" across the entire ocean.
  */
 public class FluidFlowListener implements Listener {
 
@@ -21,23 +21,23 @@ public class FluidFlowListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onFluidFlow(BlockFromToEvent event) {
-        // Hanya tangani di island world
+        // Only handle events in the island world
         if (!event.getBlock().getWorld().getName().equals(plugin.getIslandManager().getWorldName())) return;
 
-        // Blok asal (sumber air/lava)
+        // Source block (water/lava origin)
         Island sourceIsland = plugin.getIslandManager().getIslandAt(event.getBlock().getLocation());
 
-        // Blok tujuan aliran
+        // Flow destination block
         Island targetIsland = plugin.getIslandManager().getIslandAt(event.getToBlock().getLocation());
 
-        // Kalau sumber ada di island tapi tujuan sudah di luar island (atau island lain) → STOP
+        // If the source is on an island but the destination is outside that island (or on another island) → STOP
         if (sourceIsland != null && !sourceIsland.equals(targetIsland)) {
             event.setCancelled(true);
             return;
         }
 
-        // Kalau sumber bukan di island manapun (di laut bebas) → biarkan air laut mengalir normal
-        // tapi kalau arahnya masuk ke island orang lain → STOP
+        // If the source is not on any island (open ocean) → let ocean water flow normally
+        // but block it if the flow direction is into someone else's island → STOP
         if (sourceIsland == null && targetIsland != null) {
             event.setCancelled(true);
         }

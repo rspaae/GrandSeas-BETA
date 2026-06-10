@@ -16,7 +16,7 @@ public class ThemeSelectionGUI extends AbstractGUI {
     private final GrandSeas plugin;
 
     public ThemeSelectionGUI(GrandSeas plugin) {
-        super(54, "✨ Pilih Tema Pulau Pilihanmu");
+        super(54, "✨ Choose Your Island Theme");
         this.plugin = plugin;
         initializeItems();
     }
@@ -38,12 +38,12 @@ public class ThemeSelectionGUI extends AbstractGUI {
 
         // Info item in slot 13 (top center)
         ItemStack info = new ItemBuilder(Material.NETHER_STAR)
-                .name(Component.text("Pilihan Tema Pulau", NamedTextColor.GOLD, TextDecoration.BOLD).decoration(TextDecoration.ITALIC, false))
+                .name(Component.text("Island Theme Selection", NamedTextColor.GOLD, TextDecoration.BOLD).decoration(TextDecoration.ITALIC, false))
                 .lore(
                     Component.empty(),
-                    Component.text("Pilih tema awal untuk pulaumu.", NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false),
-                    Component.text("Setiap tema memiliki bentuk dan", NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false),
-                    Component.text("sumber daya yang berbeda!", NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false),
+                    Component.text("Choose a starting theme for your island.", NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false),
+                    Component.text("Each theme has a different shape and", NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false),
+                    Component.text("starting resources!", NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false),
                     Component.empty()
                 )
                 .build();
@@ -62,7 +62,7 @@ public class ThemeSelectionGUI extends AbstractGUI {
                         Component.empty(),
                         Component.text(theme.getDescription(), NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false),
                         Component.empty(),
-                        Component.text("▶ Klik untuk memilih tema ini!", NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false)
+                        Component.text("▶ Click to select this theme!", NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false)
                     )
                     .build();
                     

@@ -159,21 +159,21 @@ public class IslandManager {
         UUID uuid = player.getUniqueId();
 
         if (islands.containsKey(uuid)) {
-            player.sendMessage(Component.text("❌ Kamu sudah punya pulau!", NamedTextColor.RED));
+            player.sendMessage(Component.text("❌ You already have an island!", NamedTextColor.RED));
             return;
         }
 
         if (islandWorld == null) {
-            player.sendMessage(Component.text("❌ Dunia island belum siap. Hubungi admin.", NamedTextColor.RED));
+            player.sendMessage(Component.text("❌ Island world is not ready yet. Contact an admin.", NamedTextColor.RED));
             return;
         }
 
         if (islandCreationInProgress.contains(uuid)) {
-            player.sendMessage(Component.text("⏳ Sabar, pulaumu sedang dibuat!", NamedTextColor.RED));
+            player.sendMessage(Component.text("⏳ Please wait, your island is being created!", NamedTextColor.RED));
             return;
         }
 
-        player.sendMessage(Component.text("⏳ Menyiapkan tempatmu...", NamedTextColor.AQUA));
+        player.sendMessage(Component.text("⏳ Preparing your island...", NamedTextColor.AQUA));
         islandCreationInProgress.add(uuid);
 
         // Hitung posisi grid
@@ -283,18 +283,18 @@ public class IslandManager {
                 updatePlayerBorder(player, spawnLoc);
 
                 player.playSound(spawnLoc, Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
-                player.sendTitle("§b§l🏝 Selamat Datang!", "§7Pulaumu siap! Cek chest untuk memulai.", 10, 60, 20);
-                player.sendMessage(Component.text("🏝 Pulau berhasil dibuat!", NamedTextColor.GREEN));
-                player.sendMessage(Component.text("💡 Buka chest di pojok platform untuk item starter kamu!", NamedTextColor.YELLOW));
-                player.sendMessage(Component.text("💡 Taruh ", NamedTextColor.GRAY)
+                player.sendTitle("§b§l🏝 Welcome!", "§7Your island is ready! Check the chest to get started.", 10, 60, 20);
+                player.sendMessage(Component.text("🏝 Island created successfully!", NamedTextColor.GREEN));
+                player.sendMessage(Component.text("💡 Open the chest at the edge of the platform for your starter items!", NamedTextColor.YELLOW));
+                player.sendMessage(Component.text("💡 Place ", NamedTextColor.GRAY)
                         .append(Component.text("Ice", NamedTextColor.AQUA))
                         .append(Component.text(" + ", NamedTextColor.GRAY))
                         .append(Component.text("Lava", NamedTextColor.RED))
-                        .append(Component.text(" untuk mulai generator ore!", NamedTextColor.GRAY)));
+                        .append(Component.text(" to start the ore generator!", NamedTextColor.GRAY)));
 
             } catch (Exception e) {
-                plugin.getLogger().log(Level.SEVERE, "Gagal membuat island untuk " + player.getName(), e);
-                player.sendMessage(Component.text("❌ Terjadi kesalahan saat membuat island.", NamedTextColor.RED));
+                plugin.getLogger().log(Level.SEVERE, "Failed to create island for " + player.getName(), e);
+                player.sendMessage(Component.text("❌ An error occurred while creating the island.", NamedTextColor.RED));
                 nextIslandIndex--;
                 saveIslands();
             } finally {
@@ -426,7 +426,7 @@ public class IslandManager {
     public void teleportToIsland(Player player, Island island) {
         Location dest = island.getHome() != null ? island.getHome() : island.getCenter();
         if (dest == null) {
-            player.sendMessage(Component.text("Lokasi pulau tidak ditemukan!", NamedTextColor.RED));
+            player.sendMessage(Component.text("Island location not found!", NamedTextColor.RED));
             return;
         }
         player.teleport(dest);
